@@ -4,6 +4,6 @@ yahoo_app.json
 *.xml
 *.json
 test_files
-
+weekly_scoreboard_data
 # Allow specific files
 !*_example.json
