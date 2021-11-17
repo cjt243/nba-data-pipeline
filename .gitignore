@@ -4,3 +4,6 @@ yahoo_app.json
 *.xml
 *.json
 test_files
+
+# Allow specific files
+!*_example.json
