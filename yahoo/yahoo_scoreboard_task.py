@@ -41,10 +41,12 @@ def validateAccessToken():
         print('Current access token still valid')
     return creds
 
-# Passes in yahoo game id, yahoo league id, and a valid creds.json object to return weekly scoreboard info
-def getWeeklyScoreboard(game,league,auth):
+# Passes in yahoo game id, yahoo league id, and a valid creds.json object to get weekly scoreboard info
+# Converts the xml response to json, creates and writes that response to a json file
+# Returns the name of the newly created file for use in s3 copy to bucket
+def getWeeklyScoreboard(game,league,week,auth):
 
-    url = f"https://fantasysports.yahooapis.com/fantasy/v2/league/{game}.l.{league}/scoreboard"
+    url = f"https://fantasysports.yahooapis.com/fantasy/v2/league/{game}.l.{league}/scoreboard?week={week}"
 
     payload={}
     headers = {
@@ -55,8 +57,10 @@ def getWeeklyScoreboard(game,league,auth):
 
     response_json = xmltodict.parse(response.text)
 
-    with open('response.json', 'x') as f:
+    with open(f'weekly_scoreboard_data/2021/{game}_{league}_week-{week}.json', 'x') as f:
         f.write(json.dumps(response_json))
+
+    return f'weekly_scoreboard_data/2021/{game}_{league}_week-{week}.json'
 
 #------- end defs -------
 
@@ -74,4 +78,4 @@ if __name__ == '__main__':
     # get valid credentials for Yahoo API
     creds = validateAccessToken()
 
-    getWeeklyScoreboard(yahoo_game,yahoo_league,auth=creds)
+    weekly_json_file = getWeeklyScoreboard(yahoo_game,yahoo_league,week=4,auth=creds)
