@@ -1,0 +1,8 @@
+{
+    "client_id": "<yahoo client id>",
+    "client_secret": "<yahoo client secret>",
+    "s3_bucket": "my-example-bucket",
+    "s3_sub_folder": "/my-subfolder",
+    "yahoo_game_id": "<game id>",
+    "yahoo_league_id": "<league id>"
+}

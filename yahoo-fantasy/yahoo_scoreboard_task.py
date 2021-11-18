@@ -2,16 +2,17 @@ import json
 import requests
 import xmltodict
 import datetime
+from aws_functions import upload_file
 
 
 #------- function definitions --------
 
 # uses yahoo app info and a passed in refresh token to retrieve and store updated tokens to creds.json
-def _getNewAccessToken(refresh_token):
+def _getNewAccessToken(refresh_token, config_file):
 
   url = "https://api.login.yahoo.com/oauth2/get_token"
 
-  payload=f"client_id={yahoo['client_id']}&client_secret={yahoo['client_secret']}&redirect_uri=oob&refresh_token={refresh_token}&grant_type=refresh_token"
+  payload=f"client_id={config_file['client_id']}&client_secret={config_file['client_secret']}&redirect_uri=oob&refresh_token={refresh_token}&grant_type=refresh_token"
   headers = {
     'Content-Type': 'application/x-www-form-urlencoded'
   }
@@ -27,14 +28,14 @@ def _getNewAccessToken(refresh_token):
   # print(response.text)
 
 # Checks if current access token still valid. If not valid, uses _getNewAccessToken to refresh the access token. Returns a set of valid credentials.
-def validateAccessToken():
+def validateAccessToken(config_file):
     with open('creds.json') as f:
         creds = json.loads(f.read())
 
     if datetime.datetime.utcnow() > datetime.datetime.strptime(creds['expires_in'],'%Y-%m-%d %H:%M:%S.%f'):
         print('Access token expired.')
         print('Getting new access token....')
-        _getNewAccessToken(creds['refresh_token'])
+        _getNewAccessToken(creds['refresh_token'],config_file)
         with open('creds.json') as f:
             creds = json.loads(f.read())
     else:
@@ -57,25 +58,25 @@ def getWeeklyScoreboard(game,league,week,auth):
 
     response_json = xmltodict.parse(response.text)
 
-    with open(f'weekly_scoreboard_data/2021/{game}_{league}_week-{week}.json', 'x') as f:
+    with open(f'weekly_scoreboard_data/{game}_{league}_week-{week}.json', 'x') as f:
         f.write(json.dumps(response_json))
 
-    return f'weekly_scoreboard_data/2021/{game}_{league}_week-{week}.json'
+    return f'weekly_scoreboard_data/{game}_{league}_week-{week}.json'
 
 #------- end defs -------
 
 if __name__ == '__main__':
 
-    # grabs stored yahoo application info (client id and client secret) - needed for getting a new access token
-    with open('yahoo_app.json') as f:
-        yahoo = json.loads(f.read())
-
-    # set your game id and league id to access (yahoo specific)
-    # currently set for NBA 2021
-    yahoo_game = '410'
-    yahoo_league = '43952'
+    #load in config.json
+    with open('config.json') as f:
+        config = json.loads(f.read())
 
     # get valid credentials for Yahoo API
-    creds = validateAccessToken()
+    creds = validateAccessToken(config)
 
-    weekly_json_file = getWeeklyScoreboard(yahoo_game,yahoo_league,week=4,auth=creds)
+    # store scoreboard output into a json file
+    weekly_json_file = getWeeklyScoreboard(config['yahoo_game_id'],config['yahoo_league_id'],week=4,auth=creds)
+
+    # copy the file to the s3 bucket
+    # upload_file(weekly_json_file,'basketball-data-store',f"yahoo-fantasy/{weekly_json_file.split('/')[3]}")
+    print(upload_file(weekly_json_file,'basketball-data-store','yahoo-fantasy/'+weekly_json_file))
