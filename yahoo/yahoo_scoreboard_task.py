@@ -53,8 +53,10 @@ def getWeeklyScoreboard(game,league,auth):
 
     response = requests.request("GET", url, headers=headers, data=payload)
 
+    response_json = xmltodict.parse(response.text)
+
     with open('response.json', 'x') as f:
-        f.write(json.dumps(xmltodict.parse(response.text)))
+        f.write(json.dumps(response_json)))
 
 #------- end defs -------
 
