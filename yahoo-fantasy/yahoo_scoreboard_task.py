@@ -78,5 +78,4 @@ if __name__ == '__main__':
     weekly_json_file = getWeeklyScoreboard(config['yahoo_game_id'],config['yahoo_league_id'],week=4,auth=creds)
 
     # copy the file to the s3 bucket
-    # upload_file(weekly_json_file,'basketball-data-store',f"yahoo-fantasy/{weekly_json_file.split('/')[3]}")
     print(upload_file(weekly_json_file,'basketball-data-store','yahoo-fantasy/'+weekly_json_file))
