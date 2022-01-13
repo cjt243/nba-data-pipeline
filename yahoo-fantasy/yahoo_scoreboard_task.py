@@ -39,7 +39,7 @@ def validateAccessToken(config_file):
         with open('creds.json') as f:
             creds = json.loads(f.read())
     else:
-        print('Current access token still valid')
+        print('Current access token still valid.')
     return creds
 
 # Passes in yahoo game id, yahoo league id, and a valid creds.json object to get weekly scoreboard info
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     creds = validateAccessToken(config)
 
     # store scoreboard output into a json file
-    weekly_json_file = getWeeklyScoreboard(config['yahoo_game_id'],config['yahoo_league_id'],week=4,auth=creds)
+    weekly_json_file = getWeeklyScoreboard(config['yahoo_game_id'],config['yahoo_league_id'],week=12,auth=creds)
 
     # copy the file to the s3 bucket
     print(upload_file(weekly_json_file,'basketball-data-store','yahoo-fantasy/'+weekly_json_file))
