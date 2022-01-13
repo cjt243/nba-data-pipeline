@@ -58,7 +58,7 @@ def getWeeklyScoreboard(game,league,week,auth):
 
     response_json = xmltodict.parse(response.text)
 
-    with open(f'weekly_scoreboard_data/{game}_{league}_week-{week}.json', 'x') as f:
+    with open(f'weekly_scoreboard_data/{game}_{league}_week-{week}.json', 'w') as f:
         f.write(json.dumps(response_json))
 
     return f'weekly_scoreboard_data/{game}_{league}_week-{week}.json'
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     # get valid credentials for Yahoo API
     creds = validateAccessToken(config)
 
-    # store scoreboard output into a json file
+    # store scoreboard output into a json file, sets var to the json file name
     weekly_json_file = getWeeklyScoreboard(config['yahoo_game_id'],config['yahoo_league_id'],week=12,auth=creds)
 
     # copy the file to the s3 bucket
