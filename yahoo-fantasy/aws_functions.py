@@ -26,4 +26,27 @@ def upload_file(file_name, bucket, object_name=None):
         logging.error(e)
         return False
     return f'Successfully uploaded {file_name} to S3 bucket {bucket}/{object_name}'
+
+
+def list_files(bucket,prefix=''):
+    """ List files from an S3 bucket, optionally match a file prefix
+
+    :param bucket: Bucket name to list files from
+    :param prefix: File prefix filter (optional)
+    :return: List of files
+    """
+
+    # create session
+    session = boto3.Session()
+    s3 = session.resource('s3')
+    search_bucket = s3.Bucket(bucket)
     
+    # create list of matching files
+    files = []
+    try:
+        for i in search_bucket.objects.filter(Prefix=prefix):
+            files.append(i.key)
+    except ClientError as e:
+        logging.error(e)
+        return False
+    return files
