@@ -2,7 +2,7 @@ import json
 import requests
 import xmltodict
 import datetime
-from aws_functions import upload_file
+from aws_functions import upload_file, list_files
 
 
 #------- function definitions --------
@@ -63,6 +63,45 @@ def getWeeklyScoreboard(game,league,week,auth):
 
     return f'weekly_scoreboard_data/{game}_{league}_week-{week}.json'
 
+def _getCurrentWeek(game,league,auth):
+
+    url = f"https://fantasysports.yahooapis.com/fantasy/v2/league/{game}.l.{league}"
+
+    payload={}
+    headers = {
+    'Authorization': f"Bearer {auth['access_token']}"
+    }
+
+    response = requests.request("GET", url, headers=headers, data=payload)
+
+    response_json = xmltodict.parse(response.text)
+
+    return response_json['fantasy_content']['league']['current_week']
+
+
+def calculateWeekToPull(bucket,prefix,creds):
+    files = list_files(bucket,prefix)
+    weeks = [int(i.split('.')[0].split('-')[-1]) for i in files]
+
+    # set weeks to compare
+    last_pulled_week = int(max(weeks))
+    current_week = int(_getCurrentWeek(config['yahoo_game_id'],config['yahoo_league_id'],auth=creds))
+    current_gap = current_week - last_pulled_week
+
+    # identify week to pull, if data is not up to date
+    if current_gap >= 2:
+        week_to_pull = int(last_pulled_week+1)
+        print(f'Currently {current_gap-1} full week(s) behind. Pulling week {week_to_pull} data...')
+        return week_to_pull
+    elif current_gap == 1:
+        print(f'All full weeks have been pulled. Data is up to date. Wait until Monday to refresh.')
+        return 0
+    else:
+        print(f'Current gap is {current_gap}. Something is wrong. Look at S3 bucket and current week setup.')
+        return 0
+
+
+
 #------- end defs -------
 
 if __name__ == '__main__':
@@ -73,9 +112,13 @@ if __name__ == '__main__':
 
     # get valid credentials for Yahoo API
     creds = validateAccessToken(config)
+    
+    # identify the week to pull
+    week = calculateWeekToPull('basketball-data-store','yahoo-fantasy/weekly_scoreboard_data/',creds)
 
-    # store scoreboard output into a json file, sets var to the json file name
-    weekly_json_file = getWeeklyScoreboard(config['yahoo_game_id'],config['yahoo_league_id'],week=12,auth=creds)
+    if week != 0:
+        # store scoreboard output into a json file, sets var to the json file name
+        weekly_json_file = getWeeklyScoreboard(config['yahoo_game_id'],config['yahoo_league_id'],week=week,auth=creds)
 
-    # copy the file to the s3 bucket
-    print(upload_file(weekly_json_file,'basketball-data-store','yahoo-fantasy/'+weekly_json_file))
+        # copy the file to the s3 bucket
+        print(upload_file(weekly_json_file,'basketball-data-store','yahoo-fantasy/'+weekly_json_file))

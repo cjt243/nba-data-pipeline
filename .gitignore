@@ -8,3 +8,6 @@ weekly_scoreboard_data
 # Allow specific files
 !*_example.json
 __pycache__
+bash_logs
+*.sh
+test*
